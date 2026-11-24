@@ -81,15 +81,20 @@ Carla's lead scored 3 on one run and 4 on another. LLM scoring isn't fully deter
   1. **Retry On Fail:** 3 tries, 5 s apart, which covers short blips.
   2. **On Error → Continue:** if every retry fails, the run carries on. The Code node finds no AI reply and applies its safe defaults (`support`, urgency `3`, summary = the original message, `ai_parsed: FALSE`). The lead is still logged, posted to `#leads` for a person to read, and the form still gets `{"ok": true}`. This was verified during a real Gemini outage.
 
-## Measuring time saved
+## Time saved
 
-The automated time comes from real runs (see **Speed** above). To estimate the saving honestly:
+| Method | Time per lead | Person needed? |
+|---|---|---|
+| By hand: read, classify, summarise, add a Sheet row, post in Slack | **104 s** (1.7 min) | yes, for all of it |
+| This workflow | **~7.6 s** | no, only to read the alert |
 
-1. **Baseline:** time a person doing the same triage by hand for the six sample leads. That means reading each message, deciding the category and urgency, writing a summary, adding a Sheet row and posting in Slack. Divide by six to get the minutes per lead.
-2. **Saving per lead** = manual minutes − the time someone spends reading the finished Slack alert (the workflow's own run time needs no person).
-3. **Weekly saving** = saving per lead × leads per week.
+**How it was measured:**
+- **Manual:** [`time-manual-triage.ps1`](time-manual-triage.ps1) times a person doing every step for the same six sample leads (626 s in total).
+- **Automated:** the six production runs in n8n's Executions log.
 
-Every lead is timestamped in the Sheet, so the leads-per-week figure can come from real data once the form is live.
+The manual figure is conservative. The person timed had already seen these leads several times, so someone seeing a new lead would be slower.
+
+**Example:** at 50 leads a week, that's about 87 minutes of hands-on work a week (50 × 104 s) handed to the workflow. Every lead is timestamped in the Sheet, so the real weekly volume can replace the 50 once a live form is connected.
 
 ## Run it yourself
 
@@ -127,6 +132,7 @@ curl -X POST http://localhost:5678/webhook/lead \
 | `workflow.json` | The n8n workflow export. It contains no API keys or tokens, only credential names. |
 | `code-node.js` | The *Parse AI reply* Code node, with comments. |
 | `test-leads.ps1` | Sends the six sample leads to the test or production webhook. |
+| `time-manual-triage.ps1` | Stopwatch for timing the same triage done by hand (the manual baseline). |
 | `screenshots/` | Images used in this README. |
 
 ## Possible next steps
