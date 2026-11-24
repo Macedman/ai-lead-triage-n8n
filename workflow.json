@@ -1,0 +1,463 @@
+{
+  "name": "AI Lead Triage",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "lead",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "5c5577b4-78a6-48a9-8dc8-ffd48ae234b5",
+      "name": "Webhook",
+      "webhookId": "dfe27fba-9dc2-4888-aeae-297ab7ab5ba5"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\n  \"ok\": true\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        608,
+        0
+      ],
+      "id": "c64227d1-830d-4984-80d2-255289d3e396",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "modelId": {
+          "__rl": true,
+          "mode": "list",
+          "value": "models/gemini-3-flash-preview"
+        },
+        "messages": {
+          "values": [
+            {
+              "content": "=Name: {{ $json.body.name }}\nEmail: {{ $json.body.email }}\nMessage: {{ $json.body.message }}"
+            }
+          ]
+        },
+        "builtInTools": {},
+        "options": {
+          "systemMessage": "You triage contact-form messages for a web development company. Reply with JSON only, no other text: {\"category\": \"sales\" | \"support\" | \"spam\", \"urgency\": 1-5, \"summary\": \"one sentence\"} Urgency 5 = site down or losing money right now. 1 = no time pressure."
+        }
+      },
+      "type": "@n8n/n8n-nodes-langchain.googleGemini",
+      "typeVersion": 1.2,
+      "position": [
+        256,
+        256
+      ],
+      "id": "dcda1028-2a50-4b7a-88e5-9b8c5de0f88d",
+      "name": "Message a model",
+      "credentials": {
+        "googlePalmApi": {
+          "id": "9mySOrvOd3u4IEmZ",
+          "name": "Google Gemini(PaLM) Api account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "mode": "runOnceForEachItem",
+        "jsCode": "// Parse AI reply: turn Gemini's text into clean fields, with safe defaults.\n\n// 1. Find the AI's text (Gemini: content.parts[].text; other AI nodes: text/output)\nconst content = $json.content;\nconst parts = Array.isArray(content) ? content : (content?.parts ?? []);\nconst raw = parts.map((p) => p.text ?? '').join('') || $json.text || $json.output || '';\n\n// 2. Parse it: strip ```json fences, keep only the {...} part, never crash\nlet ai = {};\ntry {\n  const cleaned = String(raw).replace(/```json|```/g, '');\n  const start = cleaned.indexOf('{');\n  const end = cleaned.lastIndexOf('}');\n  ai = JSON.parse(cleaned.slice(start, end + 1));\n} catch (e) {\n  ai = {};\n}\n\n// 3. Original form fields come from the Webhook node, not from the AI\nconst lead = $('Webhook').item.json.body ?? {};\n\n// 4. Validate every AI field before trusting it\nconst categories = ['sales', 'support', 'spam'];\nconst urgency = Math.round(Number(ai.urgency));\n\nreturn {\n  json: {\n    time: new Date().toISOString(),\n    name: lead.name ?? '',\n    email: lead.email ?? '',\n    message: lead.message ?? '',\n    category: categories.includes(ai.category) ? ai.category : 'support',\n    urgency: urgency >= 1 && urgency <= 5 ? urgency : 3,\n    summary: ai.summary || lead.message || '(empty message)',\n    ai_parsed: Object.keys(ai).length > 0,\n  },\n};"
+      },
+      "type": "n8n-nodes-base.code",
+      "typeVersion": 2,
+      "position": [
+        624,
+        256
+      ],
+      "id": "851ce327-76b5-4421-b446-88ebd9b5009d",
+      "name": "Parse AI reply"
+    },
+    {
+      "parameters": {
+        "operation": "append",
+        "documentId": {
+          "__rl": true,
+          "value": "13p0udj4wa5qblAjwGk56g5nGX9j8doK-LXJtWxSyQNA",
+          "mode": "list",
+          "cachedResultName": "Lead Triage Log",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/13p0udj4wa5qblAjwGk56g5nGX9j8doK-LXJtWxSyQNA/edit?usp=drivesdk"
+        },
+        "sheetName": {
+          "__rl": true,
+          "value": "gid=0",
+          "mode": "list",
+          "cachedResultName": "Sheet1",
+          "cachedResultUrl": "https://docs.google.com/spreadsheets/d/13p0udj4wa5qblAjwGk56g5nGX9j8doK-LXJtWxSyQNA/edit#gid=0"
+        },
+        "columns": {
+          "mappingMode": "autoMapInputData",
+          "value": {},
+          "matchingColumns": [],
+          "schema": [
+            {
+              "id": "time",
+              "displayName": "time",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "name",
+              "displayName": "name",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "email",
+              "displayName": "email",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "message",
+              "displayName": "message",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "category",
+              "displayName": "category",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "urgency",
+              "displayName": "urgency",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "summary",
+              "displayName": "summary",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            },
+            {
+              "id": "ai_parsed",
+              "displayName": "ai_parsed",
+              "required": false,
+              "defaultMatch": false,
+              "display": true,
+              "type": "string",
+              "canBeUsedToMatch": true
+            }
+          ],
+          "attemptToConvertTypes": false,
+          "convertFieldsToString": false
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.googleSheets",
+      "typeVersion": 4.7,
+      "position": [
+        848,
+        256
+      ],
+      "id": "20f343a6-7186-497e-9c7b-8c42288d6329",
+      "name": "Append row in sheet",
+      "credentials": {
+        "googleSheetsOAuth2Api": {
+          "id": "aWx9anodtEVTHvFL",
+          "name": "Google Sheets account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 4
+          },
+          "conditions": [
+            {
+              "id": "b9cd0ed6-c0ac-44a9-b9c9-ea13e8017b69",
+              "leftValue": "={{ $('Parse AI reply').item.json.category }}",
+              "rightValue": "spam",
+              "operator": {
+                "type": "string",
+                "operation": "notEquals"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.4,
+      "position": [
+        1072,
+        256
+      ],
+      "id": "24dfd598-415b-43c3-8f0e-2a5511381060",
+      "name": "Not spam?"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 4
+          },
+          "conditions": [
+            {
+              "id": "0714d1bf-d559-4986-bcd9-cc8b7675b4bf",
+              "leftValue": "={{ $('Parse AI reply').item.json.urgency }}",
+              "rightValue": 4,
+              "operator": {
+                "type": "number",
+                "operation": "gte"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.4,
+      "position": [
+        1296,
+        256
+      ],
+      "id": "69dec8bc-d9c6-4bde-a1a6-cd440722eba3",
+      "name": "Urgent"
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "#leads",
+          "mode": "name"
+        },
+        "text": "=📥 *New {{ $('Parse AI reply').item.json.category }} lead* (urgency {{ $('Parse AI reply').item.json.urgency }}/5) \n*From:* {{ $('Parse AI reply').item.json.name }} ({{ $('Parse AI reply').item.json.email }}) \n*Summary:* {{ $('Parse AI reply').item.json.summary }}",
+        "otherOptions": {
+          "includeLinkToWorkflow": false
+        }
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.7,
+      "position": [
+        1296,
+        448
+      ],
+      "id": "621064ca-1af2-45bf-8e3c-d526adfbc88d",
+      "name": "New Lead",
+      "webhookId": "ba12d142-ef59-4d30-bb84-3bd2855ffb96",
+      "credentials": {
+        "slackApi": {
+          "id": "H61QTRY53g8Yr5TG",
+          "name": "Slack account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "select": "channel",
+        "channelId": {
+          "__rl": true,
+          "value": "#leads-urgent",
+          "mode": "name"
+        },
+        "text": "=🚨 *Urgent {{ $('Parse AI reply').item.json.category }} lead* (urgency {{ $('Parse AI reply').item.json.urgency }}/5) \n*From:* {{ $('Parse AI reply').item.json.name }} ({{ $('Parse AI reply').item.json.email }}) \n*Summary:* {{ $('Parse AI reply').item.json.summary }}",
+        "otherOptions": {
+          "includeLinkToWorkflow": false
+        }
+      },
+      "type": "n8n-nodes-base.slack",
+      "typeVersion": 2.7,
+      "position": [
+        1520,
+        256
+      ],
+      "id": "4223efce-a16b-4cf7-a979-0d94a7176adb",
+      "name": "Urgent Alert",
+      "webhookId": "ba12d142-ef59-4d30-bb84-3bd2855ffb96",
+      "credentials": {
+        "slackApi": {
+          "id": "H61QTRY53g8Yr5TG",
+          "name": "Slack account"
+        }
+      }
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\n  \"ok\": true\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1648,
+        512
+      ],
+      "id": "ab30ed0e-99a1-4137-b91e-81d064ee2f82",
+      "name": "Respond to Webhook1"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "Message a model",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Message a model": {
+      "main": [
+        [
+          {
+            "node": "Parse AI reply",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Parse AI reply": {
+      "main": [
+        [
+          {
+            "node": "Append row in sheet",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Append row in sheet": {
+      "main": [
+        [
+          {
+            "node": "Not spam?",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Not spam?": {
+      "main": [
+        [
+          {
+            "node": "Urgent",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond to Webhook1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Urgent": {
+      "main": [
+        [
+          {
+            "node": "Urgent Alert",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "New Lead",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "New Lead": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Respond to Webhook": {
+      "main": [
+        []
+      ]
+    },
+    "Urgent Alert": {
+      "main": [
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": true,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate",
+    "availableInMCP": true
+  },
+  "versionId": "353a6f9f-9bb7-427c-86fb-64660f2801cc",
+  "meta": {
+    "templateCredsSetupCompleted": true,
+    "instanceId": "b88149e5510de26d833245d419be6caf58dbb6f2834f6ef94bc7083c36a46d6f"
+  },
+  "nodeGroups": [],
+  "id": "quJEBGn3xehEfxqN",
+  "tags": []
+}
