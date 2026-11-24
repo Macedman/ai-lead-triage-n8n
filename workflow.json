@@ -12,7 +12,7 @@
       "typeVersion": 2.2,
       "position": [
         0,
-        0
+        192
       ],
       "id": "5c5577b4-78a6-48a9-8dc8-ffd48ae234b5",
       "name": "Webhook",
@@ -27,8 +27,8 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        608,
-        0
+        1696,
+        96
       ],
       "id": "c64227d1-830d-4984-80d2-255289d3e396",
       "name": "Respond to Webhook"
@@ -37,8 +37,9 @@
       "parameters": {
         "modelId": {
           "__rl": true,
+          "value": "models/gemini-3.8-flash",
           "mode": "list",
-          "value": "models/gemini-3-flash-preview"
+          "cachedResultName": "Gemini 3.8 Flash"
         },
         "messages": {
           "values": [
@@ -55,17 +56,20 @@
       "type": "@n8n/n8n-nodes-langchain.googleGemini",
       "typeVersion": 1.2,
       "position": [
-        256,
-        256
+        224,
+        192
       ],
       "id": "dcda1028-2a50-4b7a-88e5-9b8c5de0f88d",
       "name": "Message a model",
+      "retryOnFail": true,
+      "waitBetweenTries": 5000,
       "credentials": {
         "googlePalmApi": {
           "id": "9mySOrvOd3u4IEmZ",
           "name": "Google Gemini(PaLM) Api account"
         }
-      }
+      },
+      "onError": "continueRegularOutput"
     },
     {
       "parameters": {
@@ -75,8 +79,8 @@
       "type": "n8n-nodes-base.code",
       "typeVersion": 2,
       "position": [
-        624,
-        256
+        576,
+        192
       ],
       "id": "851ce327-76b5-4421-b446-88ebd9b5009d",
       "name": "Parse AI reply"
@@ -184,8 +188,8 @@
       "type": "n8n-nodes-base.googleSheets",
       "typeVersion": 4.7,
       "position": [
-        848,
-        256
+        800,
+        192
       ],
       "id": "20f343a6-7186-497e-9c7b-8c42288d6329",
       "name": "Append row in sheet",
@@ -223,8 +227,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.4,
       "position": [
-        1072,
-        256
+        1024,
+        192
       ],
       "id": "24dfd598-415b-43c3-8f0e-2a5511381060",
       "name": "Not spam?"
@@ -256,8 +260,8 @@
       "type": "n8n-nodes-base.if",
       "typeVersion": 2.4,
       "position": [
-        1296,
-        256
+        1248,
+        96
       ],
       "id": "69dec8bc-d9c6-4bde-a1a6-cd440722eba3",
       "name": "Urgent"
@@ -278,8 +282,8 @@
       "type": "n8n-nodes-base.slack",
       "typeVersion": 2.7,
       "position": [
-        1296,
-        448
+        1472,
+        192
       ],
       "id": "621064ca-1af2-45bf-8e3c-d526adfbc88d",
       "name": "New Lead",
@@ -307,8 +311,8 @@
       "type": "n8n-nodes-base.slack",
       "typeVersion": 2.7,
       "position": [
-        1520,
-        256
+        1472,
+        0
       ],
       "id": "4223efce-a16b-4cf7-a979-0d94a7176adb",
       "name": "Urgent Alert",
@@ -329,8 +333,8 @@
       "type": "n8n-nodes-base.respondToWebhook",
       "typeVersion": 1.5,
       "position": [
-        1648,
-        512
+        1248,
+        288
       ],
       "id": "ab30ed0e-99a1-4137-b91e-81d064ee2f82",
       "name": "Respond to Webhook1"
@@ -452,7 +456,7 @@
     "binaryMode": "separate",
     "availableInMCP": true
   },
-  "versionId": "353a6f9f-9bb7-427c-86fb-64660f2801cc",
+  "versionId": "c6f99083-4a07-4310-9ecd-4ce31bf3a471",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "b88149e5510de26d833245d419be6caf58dbb6f2834f6ef94bc7083c36a46d6f"

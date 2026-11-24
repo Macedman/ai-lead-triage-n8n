@@ -77,6 +77,9 @@ Carla's lead scored 3 on one run and 4 on another. LLM scoring isn't fully deter
 - **Named node references in the IF and Slack nodes** (`$('Parse AI reply').item.json...`) instead of `$json`. Moving or inserting nodes doesn't change which data they read.
 - **Slack bot token with one scope (`chat:write`).** This uses least privilege. Slack's OAuth flow needs an HTTPS redirect, which a localhost n8n doesn't have, so a bot token is the simpler secure choice for a self-hosted demo.
 - **Every branch ends at a Respond node.** The caller always gets a reply, including for spam.
+- **No lead is lost when the AI is down.** While testing, Google's API returned 503 *"model is experiencing high demand"* errors. The Gemini node now has two layers of protection:
+  1. **Retry On Fail:** 3 tries, 5 s apart, which covers short blips.
+  2. **On Error → Continue:** if every retry fails, the run carries on. The Code node finds no AI reply and applies its safe defaults (`support`, urgency `3`, summary = the original message, `ai_parsed: FALSE`). The lead is still logged, posted to `#leads` for a person to read, and the form still gets `{"ok": true}`. This was verified during a real Gemini outage.
 
 ## Measuring time saved
 
@@ -129,6 +132,6 @@ curl -X POST http://localhost:5678/webhook/lead \
 ## Possible next steps
 
 - An **Error Trigger** workflow that posts to Slack when any run fails (expired Google token, Gemini quota).
-- **Retry on failure** for the Gemini node, and a fallback path if the AI is unavailable.
+- When `ai_parsed` is false, add "⚠️ AI unavailable, please check urgency" to the Slack message, so a human re-checks leads that were routed with default values.
 - **Deduplication** of repeated submissions from the same email within a short window.
 - A reply-drafting step for sales leads, and a time-saved counter in the Sheet.
