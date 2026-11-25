@@ -2,6 +2,8 @@
 
 An n8n workflow that reads every contact-form submission with an LLM, decides whether it is **sales**, **support** or **spam**, scores how urgent it is (1–5), writes a one-sentence summary, logs it to Google Sheets and alerts the right Slack channel.
 
+▶️ **[Watch the 3-minute demo on Loom](https://www.loom.com/share/bd67d6c1f8cd4634bd9a0bc2b689a054)**: a live form submission routed to Slack and logged in the Sheet, plus what happens when the AI is down.
+
 ![Workflow canvas](screenshots/canvas.png)
 
 ## The problem
@@ -80,6 +82,7 @@ Carla's lead scored 3 on one run and 4 on another. LLM scoring isn't fully deter
 - **No lead is lost when the AI is down.** While testing, Google's API returned 503 *"model is experiencing high demand"* errors. The Gemini node now has two layers of protection:
   1. **Retry On Fail:** 3 tries, 5 s apart, which covers short blips.
   2. **On Error → Continue:** if every retry fails, the run carries on. The Code node finds no AI reply and applies its safe defaults (`support`, urgency `3`, summary = the original message, `ai_parsed: FALSE`). The lead is still logged, posted to `#leads` for a person to read, and the form still gets `{"ok": true}`. This was verified during a real Gemini outage.
+  3. **Smallest model that does the job:** the workflow uses **Gemini 3.5 Flash-Lite**. It classifies these leads correctly and kept answering while the larger Flash model was returning "high demand" errors.
 
 ## Time saved
 
@@ -132,6 +135,7 @@ curl -X POST http://localhost:5678/webhook/lead \
 | `workflow.json` | The n8n workflow export. It contains no API keys or tokens, only credential names. |
 | `code-node.js` | The *Parse AI reply* Code node, with comments. |
 | `test-leads.ps1` | Sends the six sample leads to the test or production webhook. |
+| `demo/contact-form.html` | A sample website contact form that posts to the webhook. Open it in a browser while n8n runs; add `#demo` to the URL to pre-fill a lead. |
 | `time-manual-triage.ps1` | Stopwatch for timing the same triage done by hand (the manual baseline). |
 | `screenshots/` | Images used in this README. |
 

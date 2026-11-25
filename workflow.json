@@ -37,9 +37,9 @@
       "parameters": {
         "modelId": {
           "__rl": true,
-          "value": "models/gemini-3.8-flash",
+          "value": "models/gemini-3.5-flash-lite",
           "mode": "list",
-          "cachedResultName": "Gemini 3.8 Flash"
+          "cachedResultName": "Gemini 3.5 Flash Lite"
         },
         "messages": {
           "values": [
@@ -456,7 +456,7 @@
     "binaryMode": "separate",
     "availableInMCP": true
   },
-  "versionId": "c6f99083-4a07-4310-9ecd-4ce31bf3a471",
+  "versionId": "e29a5d53-b13a-4b88-8c97-0bcd9ee7700a",
   "meta": {
     "templateCredsSetupCompleted": true,
     "instanceId": "b88149e5510de26d833245d419be6caf58dbb6f2834f6ef94bc7083c36a46d6f"

@@ -1,0 +1,121 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Contact us – Pixel &amp; Pine Web Studio</title>
+<!--
+  Demo contact form for the AI Lead Triage workflow.
+  Open this file in a browser while n8n is running; "Send" POSTs the lead as JSON
+  to the production webhook, exactly like a real website form would.
+  Add #demo to the URL to pre-fill the sample "checkout is broken" lead.
+-->
+<style>
+  :root {
+    --bg: #f4f6f8; --card: #ffffff; --text: #1d2733; --muted: #5d6b7a;
+    --border: #d5dce3; --accent: #1f7a5c; --accent-dark: #17614a;
+    --ok-bg: #e6f4ee; --ok-text: #17614a; --err-bg: #fdecec; --err-text: #a12a2a;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0; min-height: 100vh; display: grid; place-items: center;
+    background: var(--bg); color: var(--text);
+    font: 16px/1.5 "Segoe UI", system-ui, -apple-system, sans-serif;
+    padding: 24px 16px;
+  }
+  .card {
+    width: 100%; max-width: 480px; background: var(--card);
+    border: 1px solid var(--border); border-radius: 12px; padding: 32px;
+    box-shadow: 0 4px 24px rgba(29, 39, 51, 0.06);
+  }
+  .brand { font-weight: 700; color: var(--accent); letter-spacing: 0.02em; margin: 0 0 4px; }
+  h1 { font-size: 26px; margin: 0 0 6px; }
+  .lead { color: var(--muted); margin: 0 0 24px; }
+  label { display: block; font-weight: 600; font-size: 14px; margin: 0 0 6px; }
+  input, textarea {
+    width: 100%; font: inherit; color: inherit; padding: 10px 12px;
+    border: 1px solid var(--border); border-radius: 8px; background: #fff; margin: 0 0 18px;
+  }
+  input:focus, textarea:focus { outline: 2px solid var(--accent); outline-offset: 1px; border-color: var(--accent); }
+  textarea { min-height: 120px; resize: vertical; }
+  button {
+    width: 100%; font: inherit; font-weight: 600; color: #fff; background: var(--accent);
+    border: 0; border-radius: 8px; padding: 12px; cursor: pointer;
+  }
+  button:hover { background: var(--accent-dark); }
+  button:disabled { opacity: 0.7; cursor: progress; }
+  .status { margin: 16px 0 0; padding: 12px 14px; border-radius: 8px; display: none; }
+  .status.ok { display: block; background: var(--ok-bg); color: var(--ok-text); }
+  .status.err { display: block; background: var(--err-bg); color: var(--err-text); }
+</style>
+</head>
+<body>
+  <main class="card">
+    <p class="brand">Pixel &amp; Pine Web Studio</p>
+    <h1>Contact us</h1>
+    <p class="lead">Questions, quotes or something broken? We usually reply within a day.</p>
+
+    <form id="contact">
+      <label for="name">Name</label>
+      <input id="name" name="name" autocomplete="off" required>
+
+      <label for="email">Email</label>
+      <input id="email" name="email" type="email" autocomplete="off" required>
+
+      <label for="message">Message</label>
+      <textarea id="message" name="message" required></textarea>
+
+      <button id="send" type="submit">Send message</button>
+      <p id="status" class="status" role="status"></p>
+    </form>
+  </main>
+
+<script>
+  const WEBHOOK_URL = 'http://localhost:5678/webhook/lead';
+  const form = document.getElementById('contact');
+  const button = document.getElementById('send');
+  const statusEl = document.getElementById('status');
+
+  if (location.hash === '#demo') {
+    form.name.value = 'Maria';
+    form.email.value = 'maria@example.com';
+    form.message.value = 'Our checkout page is throwing errors and customers cannot pay';
+  }
+
+  function showStatus(kind, text) {
+    statusEl.className = 'status ' + kind;
+    statusEl.textContent = text;
+  }
+
+  form.addEventListener('submit', async (event) => {
+    event.preventDefault();
+    button.disabled = true;
+    button.textContent = 'Sending…';
+    statusEl.className = 'status';
+
+    const lead = {
+      name: form.name.value.trim(),
+      email: form.email.value.trim(),
+      message: form.message.value.trim(),
+    };
+
+    try {
+      const res = await fetch(WEBHOOK_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(lead),
+      });
+      const data = await res.json().catch(() => ({}));
+      if (!res.ok || data.ok !== true) throw new Error('HTTP ' + res.status);
+      showStatus('ok', 'Thanks, ' + (lead.name || 'there') + '! Your message has been received.');
+      form.reset();
+    } catch (err) {
+      showStatus('err', 'Sorry, something went wrong sending your message. Please try again.');
+    } finally {
+      button.disabled = false;
+      button.textContent = 'Send message';
+    }
+  });
+</script>
+</body>
+</html>
